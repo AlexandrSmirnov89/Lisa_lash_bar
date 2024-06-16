@@ -52,6 +52,7 @@ async def get_all_appointment():
 async def change_of_status(appoint_id, status, user_data):
     async with async_session() as session:
         user = await session.scalars(select(User).where(User.tg_id == int(user_data.id)))
+        print('ВЫВОД   ->    :  ', user.first().tg_id)
 
         if user.first() is None:
             user = User(first_name=user_data.first_name,
@@ -60,9 +61,11 @@ async def change_of_status(appoint_id, status, user_data):
                         tg_id=user_data.id)
 
             session.add(user)
+            await session.commit()
             user = await session.scalars(select(User).where(User.tg_id == int(user_data.id)))
 
         appointment = await session.get(Appointment, int(appoint_id))
+        print('ВЫВОД   ->   :  ', appointment.status)
 
         appointment.status = status
         appointment.user_id = user.first().id

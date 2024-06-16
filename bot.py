@@ -35,9 +35,8 @@ async def main():
     storage = MemoryStorage()
 
     bot = Bot(
-        token=config.tg_bot.token,
-        parse_mode=ParseMode.HTML
-    )
+        token=config.tg_bot.token
+        )
     dp = Dispatcher(storage=storage)
 
     dp.include_router(admin_handlers.router)
