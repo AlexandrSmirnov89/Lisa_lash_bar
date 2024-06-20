@@ -1,5 +1,5 @@
 from database.models import User, Appointment, async_session
-from sqlalchemy import select
+from sqlalchemy import ScalarResult, select
 
 
 async def add_free_appointment(date, time):
@@ -51,24 +51,31 @@ async def get_all_appointment():
 
 async def change_of_status(appoint_id, status, user_data):
     async with async_session() as session:
-        user = await session.scalars(select(User).where(User.tg_id == int(user_data.id)))
-        print('ВЫВОД   ->    :  ', user.first().tg_id)
-
-        if user.first() is None:
+        user: ScalarResult[User] = await session.scalars(select(User).where(User.tg_id == int(user_data.user_id)))
+        
+        result_user: User = user.first()
+        
+        
+        if result_user is None:
             user = User(first_name=user_data.first_name,
                         last_name=user_data.last_name or 'не указано',
-                        phone_number='не указано',
-                        tg_id=user_data.id)
+                        phone_number=user_data.phone_number,
+                        tg_id=user_data.user_id)
+            
+            print("ВЫВОД   ->   :  ПОЛЬЗОВАТЕЛЯ НЕ БЫЛО В БАЗЕ")
 
             session.add(user)
             await session.commit()
-            user = await session.scalars(select(User).where(User.tg_id == int(user_data.id)))
+            user: ScalarResult[User] = await session.scalars(select(User).where(User.tg_id == int(user_data.user_id)))
+            result_user: User = user.first()
+
+        print('ВЫВОД   ->   :  ', result_user.tg_id)
 
         appointment = await session.get(Appointment, int(appoint_id))
         print('ВЫВОД   ->   :  ', appointment.status)
 
         appointment.status = status
-        appointment.user_id = user.first().id
+        appointment.user_id = result_user.id
 
         await session.commit()
 

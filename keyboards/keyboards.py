@@ -1,5 +1,5 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 from database.requests import get_appointment
 from lexicon.lexicon_ru import LEXICON_RU
 
@@ -69,14 +69,14 @@ async def keyboard_free_time(date_db):
 
 
 # Клавиатура подтвердить-отменить
-button_confirm = InlineKeyboardButton(text='Подтверить', callback_data='confirmation')
-button_cancel = InlineKeyboardButton(text='Отмена', callback_data='CANCEL')
-
-confirmation_bilder = InlineKeyboardBuilder()
-
-confirmation_bilder.row(button_confirm, button_cancel, width=1)
-
-confirmation_kb: InlineKeyboardMarkup = confirmation_bilder.as_markup(
-    one_time_keyboard=True,
-    resize_keyboard=True
+button_confirm = KeyboardButton(
+    text='Отправить телефон',
+    request_contact=True
 )
+
+
+confirmation_kb = ReplyKeyboardMarkup(
+    keyboard=[[button_confirm]], 
+    resize_keyboard=True,
+    one_time_keyboard=True
+    )

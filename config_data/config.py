@@ -13,7 +13,7 @@ class DatabaseConfig:
     db_host: str  # URL-адрес базы данных
     db_user: str  # Username пользователя базы данных
     db_password: str  # Пароль к базе данных
-    db_port: str  # Порт базы данных
+    db_port: int  # Порт базы данных
 
 
 @dataclass

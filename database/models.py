@@ -13,7 +13,7 @@ DB_NAME = config.db.database
 DB_USER = config.db.db_user
 DB_PASSWORD = config.db.db_password
 
-engine = create_async_engine(f'postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}', echo=True)
+engine = create_async_engine(f'postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}', echo=True)
 
 async_session = async_sessionmaker(engine)
 

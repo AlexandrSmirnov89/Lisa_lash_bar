@@ -2,6 +2,7 @@ import logging
 import asyncio
 
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 # from aiogram.fsm.storage.redis import RedisStorage, Redis
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -35,7 +36,8 @@ async def main():
     storage = MemoryStorage()
 
     bot = Bot(
-        token=config.tg_bot.token
+        token=config.tg_bot.token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
         )
     dp = Dispatcher(storage=storage)
 
@@ -43,7 +45,7 @@ async def main():
     dp.include_router(user_handlers.router)
     dp.include_router(other_handlers.router)
 
-    admin_handlers.router.callback_query.outer_middleware(AdminsMiddleware())
+    # admin_handlers.router.callback_query.outer_middleware(AdminsMiddleware())
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
