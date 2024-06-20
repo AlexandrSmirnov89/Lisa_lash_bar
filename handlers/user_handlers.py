@@ -35,7 +35,7 @@ async def process_no_answer(message: Message):
     await message.answer(text=LEXICON_RU['no'])
 
 
-@router.message(F.text)
+@router.message(Command(commands='cancel'))
 @router.callback_query(SimpleCalendarCallback.filter(F.act == 'CANCEL'), StateFilter(FSMMakeAnAppoint.fill_date))
 @router.callback_query(F.data == 'CANCEL', ~StateFilter(default_state))
 async def process_cancel_state(callback: CallbackQuery,
@@ -50,7 +50,6 @@ async def process_cancel_state(callback: CallbackQuery,
 async def process_online_reg(callback: CallbackQuery, state: FSMContext):
     ...
     
-
 
 @router.callback_query(StateFilter(FSMMakeAnAppoint.fill_date), SimpleCalendarCallback.filter(F.act == 'PREV-MONTH'))
 @router.callback_query(F.data == 'onl_reg', default_state)
