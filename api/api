@@ -1,0 +1,152 @@
+from requests import Session
+import pprint
+import logging
+
+
+
+class DikidiAPI:
+    DIKIDI_AUTH_HOST = "auth.dikidi.ru"
+    DIKIDI_API_HOST = "beauty.dikidi.ru"
+
+    def __init__(self, login: str, password: str):
+        """
+        Create client for request to Dikidi API
+            :param login: mobile phone
+            :param password: pass phrase
+        """
+        self.login = login
+        self.password = password
+        self.session = self.create_session()
+
+    def create_session(self) -> Session:
+        """
+        Create session using credentials
+        :return: session instance
+        """
+        session = Session()
+        response = session.post(
+            url=f'https://{DikidiAPI.DIKIDI_AUTH_HOST}/ajax/user/auth/',
+            data={
+                'number': self.login,
+                'password': self.password
+            },
+            headers={
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+            }
+        )
+        if 'callback' in response.json():
+            if 'sw.auth.complete' in response.json()['callback']:
+                logging.info('Auth complete')
+                return session
+        raise Exception('Session not created')
+
+    def add_client(self):
+        response = self.session.post(
+            url=f'https://{DikidiAPI.DIKIDI_API_HOST}/owner/ajax/clients/save/',
+            data={
+                'company': 1602700,
+                'is_for_journal': 1,
+                'component_uid': 12345678,
+                'name': 'Евгения',
+                'surname': '',
+                'number': 78005553535,
+                'email': '',
+                'sex': 2,
+                'birthday': '',
+                'discount': '',
+                'card': '',
+                'comment': '',
+                'blacklist_comment': ''
+            },
+            headers={
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                'x-requested-with': 'XMLHttpRequest'
+            }
+        )
+
+        print(response.json())
+
+    def get_appointment_list(self, company_id: str, date_start: str, date_end: str, limit: int) -> list:
+        """
+        Get appointment list with client data
+        :param company_id: numeric company id
+        :param date_start: start date in format %Y-%m-%d
+        :param date_end: end date in format %Y-%m-%d
+        :param limit: number of records
+        :return: list of active appointments
+        """
+        response = self.session.get(
+            url="https://{0}/owner/ajax/journal/appointment_list/".format(DikidiAPI.DIKIDI_API_HOST),
+            params={
+                'company': company_id,
+                'client': '',
+                'start': date_start,
+                'end': date_end,
+                'date_field': '',
+                'date_order': '',
+                'sort_field': '',
+                'sort_order': '',
+                'limit': limit,
+                'offset': 0,
+                'first': 1
+            },
+            headers={
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                'x-requested-with': 'XMLHttpRequest'
+            }
+        )
+        self.session.close()
+
+        records = response.json()
+        if 'appointments' in records:
+            return [record for record in records['appointments'] if 'time' in record
+                    and 'client_phone' in record
+                    and record['status_id'] == '1']
+        elif 'error' in records:
+            if records['error'] != 0:
+                raise Exception("Code: {}. Message: {}".format(records['error']['code'], records['error']['message']))
+        else:
+            raise Exception("Request execution error")
+
+    def get_client_list(self):
+        ...
+
+    def add_appointment(self):
+        time_reservation = self.session.get(
+            url=f'https://{DikidiAPI.DIKIDI_API_HOST}/ajax/newrecord/time_reservation/',
+            params={
+                'company_id': 1602700,
+                'master_id': 3451070,
+                'services_id[]': 16826262,
+                'time': '2024-06-11 13:30:00',
+                'action_source_id': 3,
+                'is-from-journal': 1
+            },
+            headers={
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                'x-requested-with': 'XMLHttpRequest'
+            }
+        )
+        record_id = time_reservation.json()['record_id']
+        print(record_id)
+        new_record_save = self.session.post(
+            url=f'https://{DikidiAPI.DIKIDI_API_HOST}/owner/ajax/journal/newrecord_record_save/',
+            data={
+                'client_name': 'Ксеня',
+                'client_id': 123654789,
+                'client_phone': '+7 (445) 345-65-48',
+                'comments': '',
+                'color_label_id': 0,
+                'record_id': record_id,
+            },
+            headers={
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                'x-requested-with': 'XMLHttpRequest'
+            }
+        )
+        print(new_record_save.json())
+        
+        
+api = DikidiAPI(login='79003979943', password='vTWB#6r6B7hidMb')
+res = api.get_appointment_list(company_id='1602700', date_start='2024-06-01', date_end='2024-06-30', limit=50)
+pprint.pprint(res)

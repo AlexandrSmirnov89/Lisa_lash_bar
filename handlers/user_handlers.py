@@ -12,7 +12,7 @@ from states.user_states import FSMMakeAnAppoint
 from database.requests import get_appointment, change_of_status
 from datetime import date
 
-router = Router()
+router: Router = Router()
 
 
 @router.message(CommandStart(), default_state)
@@ -25,6 +25,16 @@ async def process_help_command(message: Message):
     await message.answer(text=LEXICON_RU['/help'], reply_markup=yes_no_kb)
 
 
+@router.message(Command(commands='cancel'))
+async def process_cancel_state(message: Message,
+                               state: FSMContext):
+    await message.answer(text='Вы вышли из состояния записи и попали в главное меню',
+                         reply_markup=ReplyKeyboardRemove())
+    await message.answer(text=LEXICON_RU['yes'], reply_markup=main_menu_kb)
+
+    await state.clear()
+    
+
 @router.callback_query(F.data == 'press_yes_start', default_state)
 async def process_yes_answer(callback: CallbackQuery):
     await callback.message.edit_text(text=LEXICON_RU['yes'], reply_markup=main_menu_kb)
@@ -35,7 +45,6 @@ async def process_no_answer(message: Message):
     await message.answer(text=LEXICON_RU['no'])
 
 
-@router.message(Command(commands='cancel'))
 @router.callback_query(SimpleCalendarCallback.filter(F.act == 'CANCEL'), StateFilter(FSMMakeAnAppoint.fill_date))
 @router.callback_query(F.data == 'CANCEL', ~StateFilter(default_state))
 async def process_cancel_state(callback: CallbackQuery,
@@ -50,6 +59,7 @@ async def process_cancel_state(callback: CallbackQuery,
 async def process_online_reg(callback: CallbackQuery, state: FSMContext):
     ...
     
+
 
 @router.callback_query(StateFilter(FSMMakeAnAppoint.fill_date), SimpleCalendarCallback.filter(F.act == 'PREV-MONTH'))
 @router.callback_query(F.data == 'onl_reg', default_state)
