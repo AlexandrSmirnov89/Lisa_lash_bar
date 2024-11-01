@@ -1,5 +1,5 @@
-from database.models import User, Appointment, async_session
-from sqlalchemy import ScalarResult, select
+from database.models import User, Appointment, Image, async_session
+from sqlalchemy import ScalarResult, select, delete
 
 
 async def add_free_appointment(date, time):
@@ -24,8 +24,62 @@ async def get_all_appointment():
     async with async_session() as session:
         result = await session.scalars(select(Appointment))
         return result
+    
+    
+async def get_curr_user_appoint(tg_id):
+    async with async_session() as session:
+        result = await session.scalars(select(Appointment)
+                                       .join(User, Appointment.user_id == User.id)
+                                       .where(User.tg_id == tg_id)
+                                       .where(Appointment.status == 'Подтверждено'))
+        return result
+    
 
+async def get_category_photos():
+    async with async_session() as session:
+        result = await session.scalars(select(Image.category)
+                                       .distinct())
+                
+        return result
+    
 
+async def add_photo(url_photo, category):
+    async with async_session() as session:
+        new_photo = Image(image_url=url_photo, category=category)
+        
+        session.add(new_photo)
+        await session.commit()
+        
+        
+async def get_photos(category):
+    async with async_session() as session:
+        result = await session.scalars(select(Image.image_url)
+                                       .where(Image.category == category))
+        
+        return result
+    
+
+async def del_photo(url):
+    async with async_session() as session:
+        stmt = delete(Image).where(Image.image_url == url)
+        await session.execute(stmt)
+        await session.commit()
+        
+
+async def del_category(category):
+    async with async_session() as session:
+        stmt = delete(Image).where(Image.category == category)
+        await session.execute(stmt)
+        await session.commit()
+        
+        
+async def del_appoint(appoint_id):
+    async with async_session() as session:
+        stmt = delete(Appointment).where(Appointment.id == int(appoint_id))
+        await session.execute(stmt)
+        await session.commit()
+        
+        
 # async def change_of_status(appoint_id, status, user_data):
 #     async with async_session() as session:
 #         user = await session.get(User, user_data.id)

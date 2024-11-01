@@ -9,7 +9,7 @@ from keyboards.keyboards import yes_no_kb, main_menu_kb, keyboard_free_time, con
 from lexicon.lexicon_ru import LEXICON_RU
 from services.services import CalendarRegistration
 from states.user_states import FSMMakeAnAppoint
-from database.requests import get_appointment, change_of_status
+from database.requests import get_appointment, change_of_status, get_all_appointment, get_curr_user_appoint
 from datetime import date
 
 router: Router = Router()
@@ -56,10 +56,17 @@ async def process_cancel_state(callback: CallbackQuery,
     
     
 @router.callback_query(F.data == 'c_reg', default_state)
-async def process_online_reg(callback: CallbackQuery, state: FSMContext):
-    ...
+async def process_online_reg(callback: CallbackQuery):
+    resault = await get_curr_user_appoint(callback.from_user.id)
+
+    await callback.message.edit_text(text=f'''Текущие записи:
+                                     {[(line.date, line.time) for line in resault]}''',
+                                     reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='cancel', callback_data='press_yes_start')]]))
     
 
+@router.callback_query(F.data == 'ex_work', default_state)
+async def process_ex_work(callback: CallbackQuery):
+    ...
 
 @router.callback_query(StateFilter(FSMMakeAnAppoint.fill_date), SimpleCalendarCallback.filter(F.act == 'PREV-MONTH'))
 @router.callback_query(F.data == 'onl_reg', default_state)

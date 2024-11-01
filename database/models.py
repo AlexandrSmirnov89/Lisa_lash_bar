@@ -46,6 +46,15 @@ class Appointment(Base):
     user = relationship("User", uselist=False, back_populates="appointments")
 
 
+class Image(Base):
+    __tablename__ = 'images'
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    image_url: Mapped[str] = mapped_column(nullable=False)
+    category: Mapped[str] = mapped_column(nullable=False)
+    
+
+    
 async def async_main():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
